@@ -214,6 +214,50 @@ dotnet_style_prefer_compound_assignment = true:suggestion
 dotnet_style_prefer_simplified_interpolation = true:suggestion
 dotnet_style_namespace_match_folder = true:suggestion
 
+[*.cs]
+#### Modern C# language features ####
+# All at :suggestion so they surface as subtle dots and are applied by Visual Studio
+# Code Cleanup (Tools > Options > Text Editor > C# > Code Style > "Configure Code Cleanup"
+# -> add "Apply expression/block body preferences", "Apply language/framework type preferences",
+# "Apply object/collection initializer preferences", "Sort using directives", and
+# "Apply file-scoped namespace preferences" to a profile, then Ctrl+K, Ctrl+E).
+#
+# NOTE: member ordering ("public methods first, sorted by relevance") is intentionally NOT here:
+# neither .editorconfig nor Visual Studio Code Cleanup can reorder type members. See
+# docs/review/solution-review.md ("Member ordering & Code Cleanup") for the rationale and options.
+
+# Constructors & type declarations (C# 12+)
+csharp_style_prefer_primary_constructors = true:suggestion
+csharp_style_prefer_top_level_statements = true:silent
+
+# Collection expressions (C# 12): prefer [ ... ] over new()/Array.Empty/ImmutableArray.Create
+dotnet_style_prefer_collection_expression = when_types_loosely_match:suggestion
+
+# Pattern matching
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
+csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_extended_property_pattern = true:suggestion
+
+# Index & range operators (C# 8)
+csharp_style_prefer_index_operator = true:suggestion
+csharp_style_prefer_range_operator = true:suggestion
+
+# Literals & lambdas
+csharp_style_prefer_utf8_string_literals = true:suggestion
+csharp_style_prefer_method_group_conversion = true:suggestion
+csharp_style_prefer_local_over_anonymous_function = true:suggestion
+csharp_prefer_static_local_function = true:suggestion
+csharp_prefer_static_anonymous_function = true:suggestion
+csharp_style_prefer_tuple_swap = true:suggestion
+csharp_style_prefer_unbound_generic_type_in_nameof = true:suggestion
+
+# Structs
+csharp_style_prefer_readonly_struct = true:suggestion
+csharp_style_prefer_readonly_struct_member = true:suggestion
+
 #### Analyzer diagnostic severities (promoted for build-hardening) ####
 # CA1822 stays a suggestion: some members (e.g. DataParameters.MinEntryValue) are intentionally
 # instance members for API symmetry and are accessed through an instance.

@@ -1,7 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using SearchComparisonNet.Kernel.Models;
-using Microsoft.VSDiagnostics;
-
 namespace SearchComparisonNet.Benchmarks;
 
 // Hypothesis under test: the ObservableCollection<int> indexer dominates the linear-search

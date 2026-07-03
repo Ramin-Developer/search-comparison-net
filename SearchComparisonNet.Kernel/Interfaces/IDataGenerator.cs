@@ -2,7 +2,7 @@ namespace SearchComparisonNet.Kernel.Interfaces;
 
 public interface IDataGenerator
 {
-    int NoOfEntries { get; set; }
+    int NoOfEntries { get; }
 
     int MinValue { get; }
 
@@ -11,6 +11,4 @@ public interface IDataGenerator
     int NextRandomNo();
 
     int[] Data { get; }
-
-    int[] GenerateData();
 }

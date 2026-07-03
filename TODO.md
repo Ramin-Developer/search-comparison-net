@@ -125,7 +125,48 @@ Non-blocking readability/robustness follow-ups captured so they are not lost:
   of Tier 1 to keep that change minimal and approved-scope only).
 - **K-6 leftovers** - the `IndexOutOfRangeError` message `{0}` literal and the
   `0 > index || index > NoOfEntries - 1` -> `index < 0 || index >= NoOfEntries` clarity tweak
-  remain open under K-6.
+  remain open under K-6. *(Superseded by **C-1**: the setter and `IndexOutOfRangeError` are being
+  removed outright, which retires these leftovers.)*
+
+### API-surface & consistency cleanup (C-1 .. C-8)
+
+> A focused Kernel/GUI cleanup pass surfaced while surveying the code on `code-cleanup`. See
+> [`docs/review/solution-review.md`](docs/review/solution-review.md#cleanup-follow-ups-c-1--c-8)
+> for the full rationale behind each item. All behavior-preserving.
+
+**Shipped on `code-cleanup` (highest value - dead / leaked public surface, full suite green: 115 tests):**
+
+- **C-1** *(done)* - made the `ISearch` indexer read-only; only the getter is used (by tests), the
+  setter was dead. Also removed `SearchBase.IndexOutOfRangeError` and the setter bounds-check, and
+  dropped the no-op `FakeSearch` indexer setter.
+- **C-2** *(done)* - removed `GenerateData()` from `IDataGenerator` and made it `private` in
+  `DataGenerator` (it is called once, internally, from the constructor). `FakeDataGenerator` no longer
+  re-declares it, and `DataGenerationBenchmarks` now drives a generation via construction.
+- **C-3** *(done)* - made `IDataGenerator.NoOfEntries` get-only (assigned once in the constructor),
+  matching the read-only direction taken by K-2.
+
+**Also shipped on `code-cleanup` (Kernel polish batch, behavior-preserving):**
+
+- **C-4** *(done)* - made `DataGenerator.Random` `private` (it is not on `IDataGenerator` and is not
+  read by any caller); the public members stay above it to preserve the public-first layout.
+- **C-5** *(done)* - made `SearchItem`/`ISearchItem` result objects immutable by switching the
+  setters to `init`. Every `SearchItem` is fully populated via an object initializer in `FindItem`
+  and never mutated, so all creation sites compile unchanged.
+- **C-7** *(done)* - converted `ProblemConstants` expression-bodied members to `const` (the seven
+  int limits and the four plain-string messages) and `static readonly` for the two interpolated
+  range messages (they reference the `const` ints, so they cannot be `const`). The intentional
+  `10_000` value from K-3 is unchanged, and the message text is byte-identical so the value-based
+  assertions in `InputValidationTests` still hold.
+- **C-8** *(done)* - removed the lone `#region IDataGenerator` in `DataGenerator.cs`.
+
+**Evaluated, no change (for later reference):**
+
+- **C-6** *(no-op)* - de-duplicating `NumStringConverter`/`NegativeConverter` was assessed and left
+  as-is: `NegativeConverter` already derives from `MarkupExtension` (so it cannot also inherit a
+  shared converter base), and the two converters' null handling is *opposite* (`NumStringConverter`
+  returns `null`, `NegativeConverter` throws `ArgumentNullException`). The only overlap is the
+  interface-mandated `IValueConverter` signature, so a shared base/helper would add indirection
+  without removing real duplication.
 
 ### Test-infrastructure options (deferred)
 
@@ -138,8 +179,9 @@ Non-blocking readability/robustness follow-ups captured so they are not lost:
 
 ## Suggested ordering & effort
 
-- All open code-level findings are done, and the **Tier 1 - Kernel & converter polish** branch has
-  now shipped (see Completed above).
+- All open code-level findings are done: the **Tier 1 - Kernel & converter polish** branch has
+  shipped, and the **C-1 .. C-8** cleanup batch is now fully resolved (C-1..C-5, C-7, C-8 applied;
+  C-6 evaluated and intentionally left unchanged - see above).
 - **Option B** is the next-most-valuable step (real cancellation-contract coverage without WPF).
 - **Option C** is partially in place already: the test project targets `net10.0-windows` and references
   the GUI, and `MainViewModel` is exercised through a factory abstraction. What remains for full VM

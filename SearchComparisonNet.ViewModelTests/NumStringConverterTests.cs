@@ -1,7 +1,3 @@
-using System.Globalization;
-using System.Windows.Data;
-using SearchComparisonNet.GUI.Converters;
-
 namespace SearchComparisonNet.ViewModelTests;
 
 // NumStringConverter formats numbers for display and parses them back. Its Convert branch is
