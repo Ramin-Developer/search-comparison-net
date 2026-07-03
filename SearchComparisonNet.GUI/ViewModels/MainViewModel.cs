@@ -257,31 +257,8 @@ public partial class MainViewModel : ViewModelBase
     private Task<SimulationResults> RunSimulationAsync(ISearch search, Func<int> nextRandomNo, int roundDigits, IProgress<double> progress, CancellationToken token) =>
         Task.Run(() =>
         {
-            var totalNoOfIterations = 0.0;
-            var stopwatch = Stopwatch.StartNew();
-            var lastReportMs = -1L;
-            for (var j = 0; j < NoOfSearches; j++)
-            {
-                token.ThrowIfCancellationRequested();
-                var value = nextRandomNo();
-                var searchItem = search.FindItem(value);
-                totalNoOfIterations += searchItem.NoOfIterations;
-                // Throttle progress by elapsed time: Report(...) marshals to the UI thread, so
-                // updating every iteration floods the dispatcher. Reporting at most once per
-                // ProgressReportIntervalMs keeps UI updates bounded and adapts to the run length;
-                // the final iteration always reports so the bar reaches 100%.
-                var elapsedMs = stopwatch.ElapsedMilliseconds;
-                if (ProgressReportPolicy.ShouldReport(j, NoOfSearches, elapsedMs, lastReportMs, ProgressReportIntervalMs))
-                {
-                    lastReportMs = elapsedMs;
-                    progress.Report((j + 1) * 100.0 / NoOfSearches);
-                }
-            }
-            stopwatch.Stop();
-            var timeInSec = (double)stopwatch.ElapsedMilliseconds / 1000;
-
-            var elapsedTimeInSec = Math.Round(timeInSec, roundDigits);
-            return SimulationResults(totalNoOfIterations, elapsedTimeInSec);
+            var result = SimulationRunner.Run(search, nextRandomNo, NoOfSearches, roundDigits, progress, ProgressReportIntervalMs, token);
+            return SimulationResults(result.TotalNoOfIterations, result.ElapsedTimeInSec);
         }, token);
 
     private SimulationResults SimulationResults(double totalNoOfIterations, double totalElapsedTime) =>
