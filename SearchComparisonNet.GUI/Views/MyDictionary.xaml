@@ -7,9 +7,9 @@
     <converters:NumStringConverter x:Key="NumStringConverter" />
     <converters:NegativeConverter x:Key="NegativeConverter" />
 
-    <!-- Shared height applied to every Button and TextBox so they line up across the app.
-         Set to the buttons' natural height; tune here in one place if needed. -->
-    <system:Double x:Key="ControlHeight">23</system:Double>
+    <!-- Single shared height for every Button and TextBox so they all line up.
+         Set to the textbox's natural content height; tune here in one place if needed. -->
+    <system:Double x:Key="ControlHeight">16</system:Double>
 
     <Style x:Key="ButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="#95E3E2" />
