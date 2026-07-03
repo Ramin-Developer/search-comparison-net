@@ -18,6 +18,6 @@
 
         <TextBlock Grid.Row="0" Width="45" Height="10"
                Visibility="{Binding ProgressBarVisibility}" Text="{Binding ProgressBarLabel}"
-               HorizontalAlignment="Stretch" VerticalAlignment="center" TextAlignment="Center"/>
+               HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"/>
     </Grid>
 </UserControl>

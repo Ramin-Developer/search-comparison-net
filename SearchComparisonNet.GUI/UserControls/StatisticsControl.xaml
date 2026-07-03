@@ -52,8 +52,7 @@
 
         <!-- Binary Simulation Results -->
         <Border Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-            <Grid Height="Auto" 
-                  HorizontalAlignment="Stretch" VerticalAlignment="Center">
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>

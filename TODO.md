@@ -103,6 +103,32 @@ Small, low-risk, behavior-preserving cleanup that also lifted coverage on previo
   `CultureInfo.InvariantCulture`, matching `Convert`.
 - Shipped with the full suite green (224 tests: 115 Kernel + 109 ViewModel, 0 failing, 0 skipped).
 
+### GUI single-value UX + layout consolidation (`refactor/gui`, PR #2 - open)
+Two-PR split off the earlier cleanup work. PR #1 (`code-cleanup` -> `main`) merged; this is PR #2.
+Focused on single-value search UX, dataset preview, shared layout styling, and a package bump.
+
+- **Single-value search UX** - the lookup is now explicit (on-demand via `SearchCommand`, triggered by
+  the Search button or Enter in the Target Value box) instead of running implicitly on every keystroke.
+  A value absent from the dataset yields `TargetIndex = -1` and a "Not Found" tooltip on the Target
+  Index box (`ToolTipService.ShowOnDisabled="True"`, tooltip returns `null` when there is nothing to show).
+- **Enter-to-Simulate** - a window-level `KeyBinding` runs `SimulateCommand` (respects `CanSimulate`).
+- **Dataset preview row** - `MainView` shows a compact preview of the sorted dataset: the first,
+  middle, and last groups joined by `", ..., "`, each group listing
+  `SimulationConstants.DataSampleValueCount` (default 3) comma-separated values. Reads via the
+  `ISearch` indexer so it never exposes the underlying array.
+- **Simulation constants extracted** - `SimulationConstants.cs` (Kernel) now centralizes
+  `DataSampleValueCount` and `ProgressReportIntervalMs`.
+- **App-wide control height** - a single shared `ControlHeight` (`system:Double`, currently `16`) in
+  `Views/MyDictionary.xaml` is applied through `ButtonStyle`, `TextBoxStyle`, and `TextErrorStyle`, so
+  every button and textbox lines up at one height, tunable in one place.
+- **Package update** - `BenchmarkDotNet` bumped `0.15.2` -> `0.15.8` in `BenchmarkSuite1.csproj`
+  (that project opts out of central package management). All CPM-managed packages are already latest.
+- **Pre-merge GUI cleanup (safe, non-behavioral)** - removed a redundant `Height="Auto"` on an inner
+  `Grid` in `StatisticsControl.xaml`; fixed a `VerticalAlignment="center"` casing typo in
+  `StatusControl.xaml`; made `MainView.MainViewModel` get-only. Verified `global using
+  System.Windows.Markup` is still required (by `NegativeConverter : MarkupExtension`).
+- Shipped behavior-preserving with the full suite green (228 tests passing, 0 failing).
+
 ## Remaining backlog
 
 > Single source of truth for outstanding work. These items originate from the code review in
@@ -126,6 +152,23 @@ Non-blocking readability/robustness follow-ups captured so they are not lost:
 - **K-6 leftovers** - the `IndexOutOfRangeError` message `{0}` literal and the
   `0 > index || index > NoOfEntries - 1` -> `index < 0 || index >= NoOfEntries` clarity tweak
   remain open under K-6.
+
+### GUI consolidation candidates (from the `refactor/gui` pre-merge review, deferred)
+
+Layout/structure opportunities identified while reviewing the GUI for PR #2. Left out of that PR
+because they affect layout or are larger refactors; captured here for a future focused pass:
+
+- **`LabelStyle` default alignment** - the shared `LabelStyle` defaults to `HorizontalAlignment`/
+  `HorizontalContentAlignment="Center"`, but most labels override to `Left`. Flipping the default to
+  `Left` and only overriding the few centered headers would drop ~12 inline overrides (layout-affecting).
+- **Magic-number label widths** - the repeated `Width` values (93 / 95 / 50) across `InputControl`,
+  `SearchControl`, and `StatisticsControl` could become named `system:Double` constants alongside
+  `ControlHeight` for consistency.
+- **`StatusControl` hardcoded sizes** - `ProgressBar Height="20"` and `TextBlock Height="10"`/`Width="45"`
+  are hardcoded and unrelated to the shared `ControlHeight`; decide whether they should align.
+- **`StatisticsControl` Linear/Binary duplication** - the two result blocks are ~95% identical; extract
+  a small reusable UserControl or a parameterized `DataTemplate` (title + two bindings). Structural
+  refactor, best as its own branch.
 
 ### Test-infrastructure options (deferred)
 

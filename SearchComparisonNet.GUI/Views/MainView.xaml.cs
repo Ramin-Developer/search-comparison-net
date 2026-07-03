@@ -9,5 +9,5 @@ public partial class MainView : Window
         DataContext = mainViewModel;
     }
 
-    public MainViewModel MainViewModel { get; set; }
+    public MainViewModel MainViewModel { get; }
 }
