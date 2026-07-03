@@ -1,7 +1,9 @@
 # TODO / Follow-up Tasks
 
-Tracked follow-up work deferred from the `refactor/di-and-structure` branch to keep
-each branch focused on a single theme.
+Tracked follow-up work, kept so each branch stays focused on a single theme. The **Completed**
+section is a running audit trail of merged work; the **Remaining backlog** section is the single
+source of truth for outstanding items. Every change ships on its own branch as a PR into `main`
+(including docs-only changes).
 
 ## Completed
 
@@ -103,8 +105,8 @@ Small, low-risk, behavior-preserving cleanup that also lifted coverage on previo
   `CultureInfo.InvariantCulture`, matching `Convert`.
 - Shipped with the full suite green (224 tests: 115 Kernel + 109 ViewModel, 0 failing, 0 skipped).
 
-### GUI single-value UX + layout consolidation (`refactor/gui`, PR #2 - open)
-Two-PR split off the earlier cleanup work. PR #1 (`code-cleanup` -> `main`) merged; this is PR #2.
+### GUI single-value UX + layout consolidation (`refactor/gui`, merged via PR #24)
+Two-PR split off the earlier cleanup work. PR #1 (`code-cleanup` -> `main`) merged; this shipped as PR #24.
 Focused on single-value search UX, dataset preview, shared layout styling, and a package bump.
 
 - **Single-value search UX** - the lookup is now explicit (on-demand via `SearchCommand`, triggered by
@@ -196,7 +198,7 @@ Non-blocking readability/robustness follow-ups captured so they are not lost:
 
 ### GUI consolidation candidates (from the `refactor/gui` pre-merge review, deferred)
 
-Layout/structure opportunities identified while reviewing the GUI for PR #2. Left out of that PR
+Layout/structure opportunities identified while reviewing the GUI for PR #24. Left out of that PR
 because they affect layout or are larger refactors; captured here for a future focused pass:
 
 - **`LabelStyle` default alignment** - the shared `LabelStyle` defaults to `HorizontalAlignment`/
