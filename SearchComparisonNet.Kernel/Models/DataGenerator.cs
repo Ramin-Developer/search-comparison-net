@@ -13,10 +13,7 @@ public class DataGenerator : IDataGenerator
 
     public int[] Data { get; }
 
-    public Random Random { get; }
-
-    #region IDataGenerator
-    public int NoOfEntries { get; set; }
+    public int NoOfEntries { get; }
 
     public int MinValue { get; }
 
@@ -24,7 +21,9 @@ public class DataGenerator : IDataGenerator
 
     public int NextRandomNo() => Random.Next(MinValue, MaxValue);
 
-    public int[] GenerateData()
+    private Random Random { get; }
+
+    private int[] GenerateData()
     {
         // Track membership in a compact bitset over the sampling domain [MinValue, MaxValue)
         // instead of a HashSet<int>. This avoids the HashSet Entry[] LOH allocations and lets
@@ -53,5 +52,4 @@ public class DataGenerator : IDataGenerator
 
         return result;
     }
-    #endregion IDataGenerator
 }

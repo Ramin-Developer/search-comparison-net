@@ -1,7 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using SearchComparisonNet.Kernel.Models;
-using Microsoft.VSDiagnostics;
-
 namespace SearchComparisonNet.Benchmarks;
 
 // Hypothesis under test: MainViewModel.SimulateAsync runs the two searches sequentially, so a

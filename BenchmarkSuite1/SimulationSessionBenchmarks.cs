@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using SearchComparisonNet.Kernel.Interfaces;
-using SearchComparisonNet.Kernel.Models;
-using Microsoft.VSDiagnostics;
-
 namespace SearchComparisonNet.Benchmarks;
 // Lifetime/retention check for the repeated-use pattern: every MainViewModel.SimulateAsync run
 // builds a brand-new SearchComparison (fresh DataGenerator + dataset) via the factory and runs

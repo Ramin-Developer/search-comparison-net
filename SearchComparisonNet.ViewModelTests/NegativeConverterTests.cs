@@ -1,7 +1,3 @@
-using System.Globalization;
-using System.Windows.Data;
-using SearchComparisonNet.GUI.Converters;
-
 namespace SearchComparisonNet.ViewModelTests;
 
 // NegativeConverter negates numeric inputs and inverts booleans, delegating both Convert and

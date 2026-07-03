@@ -1,8 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using SearchComparisonNet.Kernel.Models;
-using Microsoft.VSDiagnostics;
-using System.Diagnostics;
-
 namespace SearchComparisonNet.Benchmarks;
 // Hypothesis under test: in the real GUI flow (MainViewModel.SimulateLinearSearchAsync), the
 // inner search loop calls IProgress<double>.Report(...) on EVERY iteration. This benchmark

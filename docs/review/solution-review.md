@@ -358,6 +358,7 @@ A running record of which findings have been actioned, in which PR, and what rem
 | **#2** `refactor/solution-review` *(merged)* | §4 [Safe] worklist (K-4, K-6, K-3 reformat, G-8, G-9, G-10, T-2, T-3) **+** T-1 **+** K-1/G-1 | Decision **B**. Shared-data bug fixed; real binary-search tests added (50 → 56 tests). |
 | **`gui-async-threading-fixes`** *(this PR)* | **G-3** (`async void` → `AsyncRelayCommand`/`Task`), **G-2** (cross-thread UI → `Task.Run` + `IProgress<T>`, UI-thread reset), **G-5** (no-op Cancel → real `CancellationToken` cancellation) | Decision **A** for this batch. Behavior changes, build-verified (0 warnings). See "Testing decision" below. |
 | **`chore/kernel-and-converter-polish`** | **K-6** (extends): `BinarySearch` recursion → iterative loop + overflow-safe midpoint. Plus converter test coverage (relates to **G-8**) and a `NumStringConverter.ConvertBack` `InvariantCulture` fix. | Tier 1 polish. Behavior-preserving; `NumStringConverter`/`NegativeConverter` unit tests added in the `net10.0-windows` `ViewModelTests` project. |
+| **`code-cleanup`** | **C-1** (read-only `ISearch` indexer + removed `IndexOutOfRangeError`/setter bounds-check), **C-2** (`GenerateData()` removed from `IDataGenerator`, now `private`), **C-3** (`IDataGenerator.NoOfEntries` get-only). | API-surface tightening. Behavior-preserving; fakes and `DataGenerationBenchmarks` updated; full suite green (115 tests). |
 
 ### Testing decision for `gui-async-threading-fixes` (Option A)
 
@@ -375,3 +376,170 @@ Outstanding items from this review (the remaining **[Approval]** findings and th
 test-infrastructure options **B**/**C**) are now tracked as the single actionable backlog in
 [`TODO.md`](../../TODO.md). The findings and rationale above remain the reference for *why* each
 item exists; `TODO.md` is the source of truth for *what is scheduled next*.
+
+---
+
+## Cleanup follow-ups (C-1 .. C-8)
+
+A second, focused API-surface/consistency pass over the Kernel (and a couple of GUI/cosmetic
+notes), surfaced while surveying the code on `code-cleanup`. These are all behavior-preserving.
+`C-1`..`C-3` are the highest-value (they remove dead or leaked public surface). The entire batch is
+now resolved on `code-cleanup` (full suite green): `C-1`..`C-5`, `C-7`, and `C-8` were applied;
+`C-6` was evaluated and intentionally left unchanged (see its note below).
+
+| ID | Sev | Area | Finding | Status |
+|---|---|---|---|---|
+| [C-1](#c-1) | 🟡 | Kernel | `ISearch` indexer exposes a **dead mutable setter**; only the getter is used (by tests) | ✅ done |
+| [C-2](#c-2) | 🟡 | Kernel | `IDataGenerator.GenerateData()` leaks an internal detail onto the public contract | ✅ done |
+| [C-3](#c-3) | 🟡 | Kernel | `IDataGenerator.NoOfEntries` has a public setter but is only assigned once (ctor) | ✅ done |
+| [C-4](#c-4) | 🟢 | Kernel | `DataGenerator.Random` is `public` but is not on the interface and not used externally | ✅ done |
+| [C-5](#c-5) | 🟢 | Kernel | `SearchItem` / `ISearchItem` use mutable `{ get; set; }` on produced-once result objects | ✅ done |
+| [C-6](#c-6) | 🟢 | GUI | `NumStringConverter` / `NegativeConverter` share `IValueConverter` null-guard boilerplate | ⬜ no-op |
+| [C-7](#c-7) | 🟢 | Kernel | `ProblemConstants` uses expression-bodied `=>` for pure constants (recomputes per access) | ✅ done |
+| [C-8](#c-8) | 🟢 | Kernel | Lone `#region IDataGenerator` in `DataGenerator.cs` is inconsistent with the rest of the Kernel | ✅ done |
+
+### <a id="c-1"></a>C-1 🟡 — `ISearch` indexer has a dead, unsafe setter
+
+`ISearch.this[int index] { get; set; }` (implemented in `SearchBase`) is only referenced by tests
+(`SearchTestsBase`, `SearchEquivalenceTests`), and those uses are **reads** — they translate a
+known index to the value stored there so the search can then be asserted against a random dataset.
+No production code, and no test, ever *writes* through the indexer. The setter therefore only adds
+a mutable seam into the shared `Data` array plus the bounds-check and the `IndexOutOfRangeError`
+message that exists solely to serve it.
+
+**Fix (C-1, implemented on `code-cleanup`):** make the indexer read-only (`{ get; }`), and remove
+`SearchBase.IndexOutOfRangeError` and the setter's bounds-check. The legitimately-used getter stays,
+so the two consuming tests need no changes; only `FakeSearch`'s empty indexer setter is dropped.
+
+### <a id="c-2"></a>C-2 🟡 — `GenerateData()` leaks an implementation detail
+
+`IDataGenerator.GenerateData()` is called exactly once, internally, from the `DataGenerator`
+constructor (`Data = GenerateData()`). Exposing it on the interface forces every implementer
+(including both test fakes) to re-declare it and invites callers to regenerate data out of band.
+
+**Fix (C-2, implemented on `code-cleanup`):** make `GenerateData()` a `private` method of
+`DataGenerator` and remove it from `IDataGenerator`. The data-generation benchmark constructs a
+fresh generator to measure a generation instead of re-invoking the method through the interface.
+
+### <a id="c-3"></a>C-3 🟡 — `IDataGenerator.NoOfEntries` setter is unnecessary
+
+`NoOfEntries` is assigned once, in the `DataGenerator` constructor, and never mutated afterward. The
+public setter is inconsistent with the read-only direction the rest of the Kernel took (cf. **K-2**,
+which removed the `SearchBase.NoOfEntries` setter).
+
+**Fix (C-3, implemented on `code-cleanup`):** change the interface member to `{ get; }` and set the
+value via the constructor in `DataGenerator` (fakes derive it from the supplied data length).
+
+### <a id="c-4"></a>C-4 🟢 — `DataGenerator.Random` should be private
+
+`DataGenerator.Random` is a `public` property that is not part of `IDataGenerator` and is not read
+by any caller. It should be `private` so the type's public surface reflects only its contract.
+
+**Fix (C-4, implemented on `code-cleanup`):** made `Random` a `private` auto-property. A workspace
+search confirmed no external reads, so no caller changed; the public members remain above it to keep
+the public-first layout.
+
+### <a id="c-5"></a>C-5 🟢 — result objects could be immutable
+
+`SearchItem`/`ISearchItem` expose `{ get; set; }`, but every `SearchItem` is fully populated via an
+object initializer inside `FindItem` and never mutated afterward. Converting the setters to
+`init` (or making `SearchItem` a `record`) would make the produced-once nature explicit. This touches
+the interface, so it is grouped as a deliberate follow-up rather than a drive-by change.
+
+**Fix (C-5, implemented on `code-cleanup`):** switched the three properties on both `ISearchItem`
+and `SearchItem` to `{ get; init; }`. All construction happens through object initializers, so every
+creation site compiles unchanged and the objects are now immutable after creation.
+
+### <a id="c-6"></a>C-6 🟢 — converter boilerplate duplication
+
+`NumStringConverter` and `NegativeConverter` repeat similar `IValueConverter` null-guard/boilerplate.
+A shared helper or base could remove the duplication; low priority and needs a close read of both
+converters before committing to a shape.
+
+**Outcome (C-6, evaluated on `code-cleanup` — left unchanged):** the close read showed there is no
+clean, minimal dedup. `NegativeConverter` already derives from `MarkupExtension`, which consumes its
+single base-class slot, so a shared `ValueConverterBase` cannot apply to it. The converters' null
+handling is also *opposite* — `NumStringConverter.Convert` returns `null` while `NegativeConverter`
+throws `ArgumentNullException` — so there is no common guard to extract. The only shared shape is the
+interface-mandated `IValueConverter` signature. Introducing a base/helper would add indirection
+without removing real duplication, so the item is closed as a deliberate no-op.
+
+### <a id="c-7"></a>C-7 🟢 — `ProblemConstants` constants use `=>`
+
+Members like `MinNoOfEntries => 10_000` are expression-bodied properties, so they recompute on each
+access and read oddly for values that are conceptually constants. `const` / `static readonly` is more
+idiomatic. **Note:** the actual value `10_000` is intentional (see **K-3**) and must not change.
+
+**Fix (C-7, implemented on `code-cleanup`):** the seven int limits and the four plain-string
+messages became `const`; the two interpolated range messages became `static readonly` (they embed
+the `const` ints, so they cannot be `const`). The `10_000` value is unchanged, and the message text
+is byte-identical, so the value-based assertions in `InputValidationTests` continue to pass.
+
+### <a id="c-8"></a>C-8 🟢 — stray `#region` in `DataGenerator`
+
+`DataGenerator.cs` wraps most of the class in a single `#region IDataGenerator`. No other Kernel file
+uses regions; removing it is a small consistency win.
+
+**Fix (C-8, implemented on `code-cleanup`):** removed the `#region`/`#endregion` pair; the members
+keep the public-first ordering with the `private Random` property last.
+
+---
+
+## Code-style automation & member ordering
+
+The repository standardizes on a set of code-style conventions enforced through the root
+[`.editorconfig`](../../.editorconfig). This section records what is automated, what is **not**, and
+how to apply the automatable parts through Visual Studio **Code Cleanup**.
+
+### What IS automated (via `.editorconfig` + Code Cleanup)
+
+- **File-scoped namespaces** — `csharp_style_namespace_declarations = file_scoped:warning`. Already
+  applied across the codebase.
+- **Modern C# language features** — a `[*.cs]` "Modern C# language features" block sets these at
+  `:suggestion` so they show as subtle dots and are fixable by Code Cleanup: primary constructors
+  (C# 12), collection expressions (`[ ... ]`), pattern matching / switch expressions / extended
+  property & `not` patterns, index & range operators, UTF-8 string literals, method-group
+  conversions, `static` local/anonymous functions, tuple swap, and readonly-struct preferences.
+- **Global usings** — each project keeps a single `Usings.cs`; inline `using` directives are removed
+  and the global list is sorted alphabetically. `dotnet_sort_system_directives_first = false`
+  matches that ordering.
+
+Primary constructors are set as a **preference only** (`:suggestion`). Converting existing types is
+a reviewed, per-type change (constructor bodies can carry validation/side-effects and field-init
+ordering matters), not a blanket "fix all".
+
+### Setting up the Code Cleanup profile
+
+`Tools > Options > Text Editor > C# > Code Style > Formatting`, then **Configure Code Cleanup**
+(the broom icon at the bottom of the editor, or `Ctrl+K, Ctrl+E`). Add these fixers to Profile 1:
+
+- Apply file-scoped namespace preferences
+- Apply expression/block body preferences
+- Apply language/framework type preferences (`var`, predefined types)
+- Apply object/collection initializer preferences
+- Apply `using` directive placement preferences + Sort using directives
+- Remove unnecessary usings
+- Apply pattern-matching / index-and-range / null-checking preferences
+
+Then run `Ctrl+K, Ctrl+E` per file (recommended) or **Analyze > Code Cleanup > Run Code Cleanup on
+Solution**. Prefer per-file runs so diffs stay reviewable.
+
+### What is NOT automated: member ordering
+
+The desired convention is **public members first, then ordered by relevance** (a readability-first
+layout). **Neither `.editorconfig` nor Visual Studio Code Cleanup can reorder type members** — Roslyn
+has no member-layout rule, by design, because arbitrary reordering can change semantics
+(field-initializer order, `static` dependencies) and "relevance" is subjective.
+
+Options, with the honest tradeoffs:
+
+| Option | Automated? | Tradeoff |
+|---|---|---|
+| **Manual / AI-assisted reorder** *(current choice)* | Semi | Matches the exact "public-first, by relevance" intent; done per file on request. No tooling to maintain. |
+| **StyleCop.Analyzers `SA1201`/`SA1202`** | Yes (has code fix, Code Cleanup can apply) | Enforces the **standard** .NET order (const → field → constructor → property → method, then public→private within each). This is *not* "public methods first" and *not* relevance-based — adopting it means abandoning the custom rule. |
+| **ReSharper / Rider "Type Layout"** | Fully configurable | Only tool that supports arbitrary layouts, but requires a JetBrains license and lives in its own layout XML, not `.editorconfig`. The user is not using ReSharper. |
+
+**Recommendation (no ReSharper):** keep member ordering **manual / AI-assisted** to preserve the
+custom "public-first, by relevance" layout. Adopt StyleCop `SA1201/SA1202` only if the team decides
+the *standard* order is acceptable in exchange for full automation. Do not mix both — they encode
+different orderings.

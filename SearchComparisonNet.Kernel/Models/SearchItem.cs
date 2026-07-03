@@ -2,9 +2,9 @@
 
 public class SearchItem : ISearchItem
 {
-    public int? TargetIndex { get; set; }
+    public int? TargetIndex { get; init; }
 
-    public int TargetValue { get; set; }
+    public int TargetValue { get; init; }
 
-    public int NoOfIterations { get; set; }
+    public int NoOfIterations { get; init; }
 }
