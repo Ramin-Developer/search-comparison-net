@@ -383,19 +383,20 @@ item exists; `TODO.md` is the source of truth for *what is scheduled next*.
 
 A second, focused API-surface/consistency pass over the Kernel (and a couple of GUI/cosmetic
 notes), surfaced while surveying the code on `code-cleanup`. These are all behavior-preserving.
-`C-1`..`C-3` are the highest-value (they remove dead or leaked public surface) and are **done** on
-`code-cleanup` (full suite green: 115 tests); `C-4`..`C-8` are captured for later reference.
+`C-1`..`C-3` are the highest-value (they remove dead or leaked public surface). The entire batch is
+now resolved on `code-cleanup` (full suite green): `C-1`..`C-5`, `C-7`, and `C-8` were applied;
+`C-6` was evaluated and intentionally left unchanged (see its note below).
 
-| ID | Sev | Area | Finding |
-|---|---|---|---|
-| [C-1](#c-1) | 🟡 | Kernel | `ISearch` indexer exposes a **dead mutable setter**; only the getter is used (by tests) |
-| [C-2](#c-2) | 🟡 | Kernel | `IDataGenerator.GenerateData()` leaks an internal detail onto the public contract |
-| [C-3](#c-3) | 🟡 | Kernel | `IDataGenerator.NoOfEntries` has a public setter but is only assigned once (ctor) |
-| [C-4](#c-4) | 🟢 | Kernel | `DataGenerator.Random` is `public` but is not on the interface and not used externally |
-| [C-5](#c-5) | 🟢 | Kernel | `SearchItem` / `ISearchItem` use mutable `{ get; set; }` on produced-once result objects |
-| [C-6](#c-6) | 🟢 | GUI | `NumStringConverter` / `NegativeConverter` share `IValueConverter` null-guard boilerplate |
-| [C-7](#c-7) | 🟢 | Kernel | `ProblemConstants` uses expression-bodied `=>` for pure constants (recomputes per access) |
-| [C-8](#c-8) | 🟢 | Kernel | Lone `#region IDataGenerator` in `DataGenerator.cs` is inconsistent with the rest of the Kernel |
+| ID | Sev | Area | Finding | Status |
+|---|---|---|---|---|
+| [C-1](#c-1) | 🟡 | Kernel | `ISearch` indexer exposes a **dead mutable setter**; only the getter is used (by tests) | ✅ done |
+| [C-2](#c-2) | 🟡 | Kernel | `IDataGenerator.GenerateData()` leaks an internal detail onto the public contract | ✅ done |
+| [C-3](#c-3) | 🟡 | Kernel | `IDataGenerator.NoOfEntries` has a public setter but is only assigned once (ctor) | ✅ done |
+| [C-4](#c-4) | 🟢 | Kernel | `DataGenerator.Random` is `public` but is not on the interface and not used externally | ✅ done |
+| [C-5](#c-5) | 🟢 | Kernel | `SearchItem` / `ISearchItem` use mutable `{ get; set; }` on produced-once result objects | ✅ done |
+| [C-6](#c-6) | 🟢 | GUI | `NumStringConverter` / `NegativeConverter` share `IValueConverter` null-guard boilerplate | ⬜ no-op |
+| [C-7](#c-7) | 🟢 | Kernel | `ProblemConstants` uses expression-bodied `=>` for pure constants (recomputes per access) | ✅ done |
+| [C-8](#c-8) | 🟢 | Kernel | Lone `#region IDataGenerator` in `DataGenerator.cs` is inconsistent with the rest of the Kernel | ✅ done |
 
 ### <a id="c-1"></a>C-1 🟡 — `ISearch` indexer has a dead, unsafe setter
 
@@ -434,6 +435,10 @@ value via the constructor in `DataGenerator` (fakes derive it from the supplied 
 `DataGenerator.Random` is a `public` property that is not part of `IDataGenerator` and is not read
 by any caller. It should be `private` so the type's public surface reflects only its contract.
 
+**Fix (C-4, implemented on `code-cleanup`):** made `Random` a `private` auto-property. A workspace
+search confirmed no external reads, so no caller changed; the public members remain above it to keep
+the public-first layout.
+
 ### <a id="c-5"></a>C-5 🟢 — result objects could be immutable
 
 `SearchItem`/`ISearchItem` expose `{ get; set; }`, but every `SearchItem` is fully populated via an
@@ -441,11 +446,23 @@ object initializer inside `FindItem` and never mutated afterward. Converting the
 `init` (or making `SearchItem` a `record`) would make the produced-once nature explicit. This touches
 the interface, so it is grouped as a deliberate follow-up rather than a drive-by change.
 
+**Fix (C-5, implemented on `code-cleanup`):** switched the three properties on both `ISearchItem`
+and `SearchItem` to `{ get; init; }`. All construction happens through object initializers, so every
+creation site compiles unchanged and the objects are now immutable after creation.
+
 ### <a id="c-6"></a>C-6 🟢 — converter boilerplate duplication
 
 `NumStringConverter` and `NegativeConverter` repeat similar `IValueConverter` null-guard/boilerplate.
 A shared helper or base could remove the duplication; low priority and needs a close read of both
 converters before committing to a shape.
+
+**Outcome (C-6, evaluated on `code-cleanup` — left unchanged):** the close read showed there is no
+clean, minimal dedup. `NegativeConverter` already derives from `MarkupExtension`, which consumes its
+single base-class slot, so a shared `ValueConverterBase` cannot apply to it. The converters' null
+handling is also *opposite* — `NumStringConverter.Convert` returns `null` while `NegativeConverter`
+throws `ArgumentNullException` — so there is no common guard to extract. The only shared shape is the
+interface-mandated `IValueConverter` signature. Introducing a base/helper would add indirection
+without removing real duplication, so the item is closed as a deliberate no-op.
 
 ### <a id="c-7"></a>C-7 🟢 — `ProblemConstants` constants use `=>`
 
@@ -453,10 +470,18 @@ Members like `MinNoOfEntries => 10_000` are expression-bodied properties, so the
 access and read oddly for values that are conceptually constants. `const` / `static readonly` is more
 idiomatic. **Note:** the actual value `10_000` is intentional (see **K-3**) and must not change.
 
+**Fix (C-7, implemented on `code-cleanup`):** the seven int limits and the four plain-string
+messages became `const`; the two interpolated range messages became `static readonly` (they embed
+the `const` ints, so they cannot be `const`). The `10_000` value is unchanged, and the message text
+is byte-identical, so the value-based assertions in `InputValidationTests` continue to pass.
+
 ### <a id="c-8"></a>C-8 🟢 — stray `#region` in `DataGenerator`
 
 `DataGenerator.cs` wraps most of the class in a single `#region IDataGenerator`. No other Kernel file
 uses regions; removing it is a small consistency win.
+
+**Fix (C-8, implemented on `code-cleanup`):** removed the `#region`/`#endregion` pair; the members
+keep the public-first ordering with the `private Random` property last.
 
 ---
 

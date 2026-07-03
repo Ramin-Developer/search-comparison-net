@@ -2,9 +2,9 @@
 
 public interface ISearchItem
 {
-    int? TargetIndex { get; set; }
+    int? TargetIndex { get; init; }
 
-    int TargetValue { get; set; }
+    int TargetValue { get; init; }
 
-    int NoOfIterations { get; set; }
+    int NoOfIterations { get; init; }
 }

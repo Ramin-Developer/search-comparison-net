@@ -13,9 +13,6 @@ public class DataGenerator : IDataGenerator
 
     public int[] Data { get; }
 
-    public Random Random { get; }
-
-    #region IDataGenerator
     public int NoOfEntries { get; }
 
     public int MinValue { get; }
@@ -23,7 +20,8 @@ public class DataGenerator : IDataGenerator
     public int MaxValue { get; }
 
     public int NextRandomNo() => Random.Next(MinValue, MaxValue);
-    #endregion IDataGenerator
+
+    private Random Random { get; }
 
     private int[] GenerateData()
     {

@@ -4,11 +4,11 @@ namespace SearchComparisonNet.ViewModelTests.Fakes;
 // so tests can assert the exact averages a run produces.
 public sealed class FakeSearchItem : ISearchItem
 {
-    public int? TargetIndex { get; set; }
+    public int? TargetIndex { get; init; }
 
-    public int TargetValue { get; set; }
+    public int TargetValue { get; init; }
 
-    public int NoOfIterations { get; set; }
+    public int NoOfIterations { get; init; }
 }
 
 // Deterministic ISearch: FindItem always returns the same configured item. This removes
