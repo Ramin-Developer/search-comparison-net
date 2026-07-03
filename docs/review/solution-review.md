@@ -358,6 +358,7 @@ A running record of which findings have been actioned, in which PR, and what rem
 | **#2** `refactor/solution-review` *(merged)* | §4 [Safe] worklist (K-4, K-6, K-3 reformat, G-8, G-9, G-10, T-2, T-3) **+** T-1 **+** K-1/G-1 | Decision **B**. Shared-data bug fixed; real binary-search tests added (50 → 56 tests). |
 | **`gui-async-threading-fixes`** *(this PR)* | **G-3** (`async void` → `AsyncRelayCommand`/`Task`), **G-2** (cross-thread UI → `Task.Run` + `IProgress<T>`, UI-thread reset), **G-5** (no-op Cancel → real `CancellationToken` cancellation) | Decision **A** for this batch. Behavior changes, build-verified (0 warnings). See "Testing decision" below. |
 | **`chore/kernel-and-converter-polish`** | **K-6** (extends): `BinarySearch` recursion → iterative loop + overflow-safe midpoint. Plus converter test coverage (relates to **G-8**) and a `NumStringConverter.ConvertBack` `InvariantCulture` fix. | Tier 1 polish. Behavior-preserving; `NumStringConverter`/`NegativeConverter` unit tests added in the `net10.0-windows` `ViewModelTests` project. |
+| **`code-cleanup`** | **C-1** (read-only `ISearch` indexer + removed `IndexOutOfRangeError`/setter bounds-check), **C-2** (`GenerateData()` removed from `IDataGenerator`, now `private`), **C-3** (`IDataGenerator.NoOfEntries` get-only). | API-surface tightening. Behavior-preserving; fakes and `DataGenerationBenchmarks` updated; full suite green (115 tests). |
 
 ### Testing decision for `gui-async-threading-fixes` (Option A)
 
@@ -375,3 +376,84 @@ Outstanding items from this review (the remaining **[Approval]** findings and th
 test-infrastructure options **B**/**C**) are now tracked as the single actionable backlog in
 [`TODO.md`](../../TODO.md). The findings and rationale above remain the reference for *why* each
 item exists; `TODO.md` is the source of truth for *what is scheduled next*.
+
+---
+
+## Cleanup follow-ups (C-1 .. C-8)
+
+A second, focused API-surface/consistency pass over the Kernel (and a couple of GUI/cosmetic
+notes), surfaced while surveying the code on `code-cleanup`. These are all behavior-preserving.
+`C-1`..`C-3` are the highest-value (they remove dead or leaked public surface) and are **done** on
+`code-cleanup` (full suite green: 115 tests); `C-4`..`C-8` are captured for later reference.
+
+| ID | Sev | Area | Finding |
+|---|---|---|---|
+| [C-1](#c-1) | 🟡 | Kernel | `ISearch` indexer exposes a **dead mutable setter**; only the getter is used (by tests) |
+| [C-2](#c-2) | 🟡 | Kernel | `IDataGenerator.GenerateData()` leaks an internal detail onto the public contract |
+| [C-3](#c-3) | 🟡 | Kernel | `IDataGenerator.NoOfEntries` has a public setter but is only assigned once (ctor) |
+| [C-4](#c-4) | 🟢 | Kernel | `DataGenerator.Random` is `public` but is not on the interface and not used externally |
+| [C-5](#c-5) | 🟢 | Kernel | `SearchItem` / `ISearchItem` use mutable `{ get; set; }` on produced-once result objects |
+| [C-6](#c-6) | 🟢 | GUI | `NumStringConverter` / `NegativeConverter` share `IValueConverter` null-guard boilerplate |
+| [C-7](#c-7) | 🟢 | Kernel | `ProblemConstants` uses expression-bodied `=>` for pure constants (recomputes per access) |
+| [C-8](#c-8) | 🟢 | Kernel | Lone `#region IDataGenerator` in `DataGenerator.cs` is inconsistent with the rest of the Kernel |
+
+### <a id="c-1"></a>C-1 🟡 — `ISearch` indexer has a dead, unsafe setter
+
+`ISearch.this[int index] { get; set; }` (implemented in `SearchBase`) is only referenced by tests
+(`SearchTestsBase`, `SearchEquivalenceTests`), and those uses are **reads** — they translate a
+known index to the value stored there so the search can then be asserted against a random dataset.
+No production code, and no test, ever *writes* through the indexer. The setter therefore only adds
+a mutable seam into the shared `Data` array plus the bounds-check and the `IndexOutOfRangeError`
+message that exists solely to serve it.
+
+**Fix (C-1, implemented on `code-cleanup`):** make the indexer read-only (`{ get; }`), and remove
+`SearchBase.IndexOutOfRangeError` and the setter's bounds-check. The legitimately-used getter stays,
+so the two consuming tests need no changes; only `FakeSearch`'s empty indexer setter is dropped.
+
+### <a id="c-2"></a>C-2 🟡 — `GenerateData()` leaks an implementation detail
+
+`IDataGenerator.GenerateData()` is called exactly once, internally, from the `DataGenerator`
+constructor (`Data = GenerateData()`). Exposing it on the interface forces every implementer
+(including both test fakes) to re-declare it and invites callers to regenerate data out of band.
+
+**Fix (C-2, implemented on `code-cleanup`):** make `GenerateData()` a `private` method of
+`DataGenerator` and remove it from `IDataGenerator`. The data-generation benchmark constructs a
+fresh generator to measure a generation instead of re-invoking the method through the interface.
+
+### <a id="c-3"></a>C-3 🟡 — `IDataGenerator.NoOfEntries` setter is unnecessary
+
+`NoOfEntries` is assigned once, in the `DataGenerator` constructor, and never mutated afterward. The
+public setter is inconsistent with the read-only direction the rest of the Kernel took (cf. **K-2**,
+which removed the `SearchBase.NoOfEntries` setter).
+
+**Fix (C-3, implemented on `code-cleanup`):** change the interface member to `{ get; }` and set the
+value via the constructor in `DataGenerator` (fakes derive it from the supplied data length).
+
+### <a id="c-4"></a>C-4 🟢 — `DataGenerator.Random` should be private
+
+`DataGenerator.Random` is a `public` property that is not part of `IDataGenerator` and is not read
+by any caller. It should be `private` so the type's public surface reflects only its contract.
+
+### <a id="c-5"></a>C-5 🟢 — result objects could be immutable
+
+`SearchItem`/`ISearchItem` expose `{ get; set; }`, but every `SearchItem` is fully populated via an
+object initializer inside `FindItem` and never mutated afterward. Converting the setters to
+`init` (or making `SearchItem` a `record`) would make the produced-once nature explicit. This touches
+the interface, so it is grouped as a deliberate follow-up rather than a drive-by change.
+
+### <a id="c-6"></a>C-6 🟢 — converter boilerplate duplication
+
+`NumStringConverter` and `NegativeConverter` repeat similar `IValueConverter` null-guard/boilerplate.
+A shared helper or base could remove the duplication; low priority and needs a close read of both
+converters before committing to a shape.
+
+### <a id="c-7"></a>C-7 🟢 — `ProblemConstants` constants use `=>`
+
+Members like `MinNoOfEntries => 10_000` are expression-bodied properties, so they recompute on each
+access and read oddly for values that are conceptually constants. `const` / `static readonly` is more
+idiomatic. **Note:** the actual value `10_000` is intentional (see **K-3**) and must not change.
+
+### <a id="c-8"></a>C-8 🟢 — stray `#region` in `DataGenerator`
+
+`DataGenerator.cs` wraps most of the class in a single `#region IDataGenerator`. No other Kernel file
+uses regions; removing it is a small consistency win.

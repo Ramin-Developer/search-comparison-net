@@ -1,5 +1,3 @@
-using SearchComparisonNet.Kernel.Models;
-
 namespace SearchComparisonNet.Benchmarks;
 
 // Builds a single shared dataset (via the production DataGenerator) plus a raw int[] copy of

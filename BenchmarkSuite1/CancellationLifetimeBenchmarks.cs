@@ -1,6 +1,3 @@
-using BenchmarkDotNet.Attributes;
-using Microsoft.VSDiagnostics;
-
 namespace SearchComparisonNet.Benchmarks;
 // Investigates the disposal/lifetime questions raised for the GUI simulate/cancel flow:
 //   * "Is the CancellationTokenSource leaking across repeated runs?"

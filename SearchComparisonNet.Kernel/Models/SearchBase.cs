@@ -7,19 +7,9 @@ public abstract class SearchBase(IDataGenerator dataGen) : ISearch
     // the previously public setter (K-2).
     public int NoOfEntries => Data.Length;
 
-    public int this[int index]
-    {
-        get => Data[index];
-        set
-        {
-            if (index < 0 || index >= NoOfEntries)
-            { throw new ArgumentOutOfRangeException(nameof(index), IndexOutOfRangeError); }
-
-            Data[index] = value;
-        }
-    }
-
-    public string IndexOutOfRangeError => $"Index must be an integer in the interval [0, {NoOfEntries - 1}].";
+    // Read-only: callers (the tests) only translate a known index to the value stored there so the
+    // search can be asserted. The previously public setter was dead surface and was removed (C-1).
+    public int this[int index] => Data[index];
 
     public abstract ISearchItem FindItem(int value);
 

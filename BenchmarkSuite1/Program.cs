@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // -----------------------------------------------------------------------
 
-using BenchmarkDotNet.Running;
-
 namespace BenchmarkSuite1;
 
 internal sealed class Program

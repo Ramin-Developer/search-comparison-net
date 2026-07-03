@@ -1,5 +1,3 @@
-using SearchComparisonNet.Kernel.Interfaces;
-
 namespace SearchComparisonNet.Tests.Common;
 
 // Deterministic IDataGenerator test double over a caller-supplied, already-sorted dataset.
@@ -17,7 +15,7 @@ internal sealed class FakeDataGenerator : IDataGenerator
         MaxValue = data.Length == 0 ? 0 : data[^1];
     }
 
-    public int NoOfEntries { get; set; }
+    public int NoOfEntries { get; }
 
     public int MinValue { get; }
 
@@ -36,6 +34,4 @@ internal sealed class FakeDataGenerator : IDataGenerator
         _nextIndex++;
         return value;
     }
-
-    public int[] GenerateData() => Data;
 }

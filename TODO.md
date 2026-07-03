@@ -125,7 +125,35 @@ Non-blocking readability/robustness follow-ups captured so they are not lost:
   of Tier 1 to keep that change minimal and approved-scope only).
 - **K-6 leftovers** - the `IndexOutOfRangeError` message `{0}` literal and the
   `0 > index || index > NoOfEntries - 1` -> `index < 0 || index >= NoOfEntries` clarity tweak
-  remain open under K-6.
+  remain open under K-6. *(Superseded by **C-1**: the setter and `IndexOutOfRangeError` are being
+  removed outright, which retires these leftovers.)*
+
+### API-surface & consistency cleanup (C-1 .. C-8)
+
+> A focused Kernel/GUI cleanup pass surfaced while surveying the code on `code-cleanup`. See
+> [`docs/review/solution-review.md`](docs/review/solution-review.md#cleanup-follow-ups-c-1--c-8)
+> for the full rationale behind each item. All behavior-preserving.
+
+**Shipped on `code-cleanup` (highest value - dead / leaked public surface, full suite green: 115 tests):**
+
+- **C-1** *(done)* - made the `ISearch` indexer read-only; only the getter is used (by tests), the
+  setter was dead. Also removed `SearchBase.IndexOutOfRangeError` and the setter bounds-check, and
+  dropped the no-op `FakeSearch` indexer setter.
+- **C-2** *(done)* - removed `GenerateData()` from `IDataGenerator` and made it `private` in
+  `DataGenerator` (it is called once, internally, from the constructor). `FakeDataGenerator` no longer
+  re-declares it, and `DataGenerationBenchmarks` now drives a generation via construction.
+- **C-3** *(done)* - made `IDataGenerator.NoOfEntries` get-only (assigned once in the constructor),
+  matching the read-only direction taken by K-2.
+
+**Deferred (lower priority, for later reference):**
+
+- **C-4** - make `DataGenerator.Random` `private` (not on the interface, not used externally).
+- **C-5** - make `SearchItem`/`ISearchItem` result objects immutable (`init`-only or a `record`);
+  they are produced once via object initializer and never mutated.
+- **C-6** - de-duplicate `NumStringConverter`/`NegativeConverter` `IValueConverter` boilerplate.
+- **C-7** - convert `ProblemConstants` expression-bodied members to `const`/`static readonly`
+  (leave the intentional `10_000` value from K-3 unchanged).
+- **C-8** - remove the lone `#region IDataGenerator` in `DataGenerator.cs` for consistency.
 
 ### Test-infrastructure options (deferred)
 
