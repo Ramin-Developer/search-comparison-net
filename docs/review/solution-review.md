@@ -457,3 +457,64 @@ idiomatic. **Note:** the actual value `10_000` is intentional (see **K-3**) and 
 
 `DataGenerator.cs` wraps most of the class in a single `#region IDataGenerator`. No other Kernel file
 uses regions; removing it is a small consistency win.
+
+---
+
+## Code-style automation & member ordering
+
+The repository standardizes on a set of code-style conventions enforced through the root
+[`.editorconfig`](../../.editorconfig). This section records what is automated, what is **not**, and
+how to apply the automatable parts through Visual Studio **Code Cleanup**.
+
+### What IS automated (via `.editorconfig` + Code Cleanup)
+
+- **File-scoped namespaces** — `csharp_style_namespace_declarations = file_scoped:warning`. Already
+  applied across the codebase.
+- **Modern C# language features** — a `[*.cs]` "Modern C# language features" block sets these at
+  `:suggestion` so they show as subtle dots and are fixable by Code Cleanup: primary constructors
+  (C# 12), collection expressions (`[ ... ]`), pattern matching / switch expressions / extended
+  property & `not` patterns, index & range operators, UTF-8 string literals, method-group
+  conversions, `static` local/anonymous functions, tuple swap, and readonly-struct preferences.
+- **Global usings** — each project keeps a single `Usings.cs`; inline `using` directives are removed
+  and the global list is sorted alphabetically. `dotnet_sort_system_directives_first = false`
+  matches that ordering.
+
+Primary constructors are set as a **preference only** (`:suggestion`). Converting existing types is
+a reviewed, per-type change (constructor bodies can carry validation/side-effects and field-init
+ordering matters), not a blanket "fix all".
+
+### Setting up the Code Cleanup profile
+
+`Tools > Options > Text Editor > C# > Code Style > Formatting`, then **Configure Code Cleanup**
+(the broom icon at the bottom of the editor, or `Ctrl+K, Ctrl+E`). Add these fixers to Profile 1:
+
+- Apply file-scoped namespace preferences
+- Apply expression/block body preferences
+- Apply language/framework type preferences (`var`, predefined types)
+- Apply object/collection initializer preferences
+- Apply `using` directive placement preferences + Sort using directives
+- Remove unnecessary usings
+- Apply pattern-matching / index-and-range / null-checking preferences
+
+Then run `Ctrl+K, Ctrl+E` per file (recommended) or **Analyze > Code Cleanup > Run Code Cleanup on
+Solution**. Prefer per-file runs so diffs stay reviewable.
+
+### What is NOT automated: member ordering
+
+The desired convention is **public members first, then ordered by relevance** (a readability-first
+layout). **Neither `.editorconfig` nor Visual Studio Code Cleanup can reorder type members** — Roslyn
+has no member-layout rule, by design, because arbitrary reordering can change semantics
+(field-initializer order, `static` dependencies) and "relevance" is subjective.
+
+Options, with the honest tradeoffs:
+
+| Option | Automated? | Tradeoff |
+|---|---|---|
+| **Manual / AI-assisted reorder** *(current choice)* | Semi | Matches the exact "public-first, by relevance" intent; done per file on request. No tooling to maintain. |
+| **StyleCop.Analyzers `SA1201`/`SA1202`** | Yes (has code fix, Code Cleanup can apply) | Enforces the **standard** .NET order (const → field → constructor → property → method, then public→private within each). This is *not* "public methods first" and *not* relevance-based — adopting it means abandoning the custom rule. |
+| **ReSharper / Rider "Type Layout"** | Fully configurable | Only tool that supports arbitrary layouts, but requires a JetBrains license and lives in its own layout XML, not `.editorconfig`. The user is not using ReSharper. |
+
+**Recommendation (no ReSharper):** keep member ordering **manual / AI-assisted** to preserve the
+custom "public-first, by relevance" layout. Adopt StyleCop `SA1201/SA1202` only if the team decides
+the *standard* order is acceptable in exchange for full automation. Do not mix both — they encode
+different orderings.
