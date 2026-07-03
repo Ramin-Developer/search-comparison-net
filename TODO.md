@@ -131,6 +131,23 @@ Focused on single-value search UX, dataset preview, shared layout styling, and a
   System.Windows.Markup` is still required (by `NegativeConverter : MarkupExtension`).
 - Shipped behavior-preserving with the full suite green (228 tests passing, 0 failing).
 
+### Cancellation contract coverage - Option B (`test/cancellation-contract-g5`)
+Extracted the cancellation-aware simulation loop out of the WPF view model so the G-5 cancellation
+contract can be unit-tested headlessly (no WPF, no UI `SynchronizationContext`).
+
+- **`SimulationRunner` (Kernel)** - the loop body from `MainViewModel.RunSimulationAsync` moved into a
+  pure static `SimulationRunner.Run(...)` in `SearchComparisonNet.Kernel/Models/`, mirroring the
+  existing `ProgressReportPolicy` extraction. It returns a `SimulationRunResult` (`TotalNoOfIterations`,
+  `ElapsedTimeInSec`); the view model keeps dividing by the search count to derive its averages.
+- **View model** - `RunSimulationAsync` now wraps `SimulationRunner.Run(...)` inside its existing
+  `Task.Run(..., token)`; all cancellation/progress/rounding behavior is preserved. Removed the now-dead
+  `global using System.Diagnostics;` from the GUI.
+- **Tests** - added `SimulationRunnerTests` (Kernel-only `net10.0` project) covering the G-5 contract:
+  an already-cancelled token throws before any `FindItem`; mid-run cancellation stops right after the
+  first search; normal completion iterates exactly `noOfSearches` times and sums `NoOfIterations`;
+  progress reaches 100%; plus null-argument guards. Added a minimal `FakeSearch`/`FakeSearchItem`.
+- Shipped behavior-preserving with the full suite green (234 tests: 121 Kernel + 113 ViewModel, 0 failing).
+
 ## Remaining backlog
 
 > Single source of truth for outstanding work. These items originate from the code review in
@@ -215,9 +232,9 @@ because they affect layout or are larger refactors; captured here for a future f
 
 ### Test-infrastructure options (deferred)
 
-- **Option B** - extract the cancellation-aware iteration logic into a Kernel-side (or plain,
-  `net10.0`-referenceable) helper and unit-test the G-5 cancellation contract (token honored,
-  `OperationCanceledException` thrown) without WPF. Moderate effort.
+- **Option B** *(done - `test/cancellation-contract-g5`)* - extracted the cancellation-aware iteration
+  logic into a Kernel-side (`net10.0`) `SimulationRunner` helper and unit-tested the G-5 cancellation
+  contract (token honored, `OperationCanceledException` thrown) without WPF. See the Completed section above.
 - **Option C** - full VM testability: re-target the test project to `net10.0-windows`, add a GUI
   `ProjectReference`, refactor `MainViewModel` for constructor injection (pairs with G-4), and add
   a UI-`SynchronizationContext` fixture to exercise dispatcher marshaling. Largest effort.
@@ -227,9 +244,10 @@ because they affect layout or are larger refactors; captured here for a future f
 - All open code-level findings are done: the **Tier 1 - Kernel & converter polish** branch has
   shipped, and the **C-1 .. C-8** cleanup batch is now fully resolved (C-1..C-5, C-7, C-8 applied;
   C-6 evaluated and intentionally left unchanged - see above).
-- **Option B** is the next-most-valuable step (real cancellation-contract coverage without WPF).
-- **Option C** is partially in place already: the test project targets `net10.0-windows` and references
-  the GUI, and `MainViewModel` is exercised through a factory abstraction. What remains for full VM
-  testability is a UI-`SynchronizationContext` fixture to exercise dispatcher marshaling; schedule
+- **Option B** has shipped (`test/cancellation-contract-g5`): the cancellation-aware loop now lives in
+  the Kernel `SimulationRunner` with headless G-5 contract coverage.
+- **Option C** is partially in place already: the `ViewModelTests` project targets `net10.0-windows` and
+  references the GUI, and `MainViewModel` is exercised through a factory abstraction. What remains for
+  full VM testability is a UI-`SynchronizationContext` fixture to exercise dispatcher marshaling; schedule
   deliberately.
 - The **Polish backlog** items are optional follow-ups, to be picked up opportunistically.

@@ -8,7 +8,6 @@ global using SearchComparisonNet.Kernel.Interfaces;
 global using SearchComparisonNet.Kernel.Models;
 global using System.Collections;
 global using System.ComponentModel;
-global using System.Diagnostics;
 global using System.Globalization;
 global using System.Windows;
 global using System.Windows.Controls;
