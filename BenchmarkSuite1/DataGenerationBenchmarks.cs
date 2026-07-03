@@ -1,4 +1,5 @@
 namespace SearchComparisonNet.Benchmarks;
+
 [SimpleJob(warmupCount: 3, iterationCount: 5)]
 [MemoryDiagnoser]
 [CPUUsageDiagnoser]
