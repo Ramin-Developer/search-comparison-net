@@ -6,7 +6,5 @@
   <Project Path="SearchComparisonNet.GUI/SearchComparisonNet.GUI.csproj" />
   <Project Path="SearchComparisonNet.Kernel/SearchComparisonNet.Kernel.csproj" />
   <Project Path="SearchComparisonNet.Tests/SearchComparisonNet.Tests.csproj" />
-  <Project Path="SearchComparisonNet.ViewModelTests/SearchComparisonNet.ViewModelTests.csproj">
-    <Build Solution="Release|*" Project="false" />
-  </Project>
+  <Project Path="SearchComparisonNet.ViewModelTests/SearchComparisonNet.ViewModelTests.csproj" />
 </Solution>
