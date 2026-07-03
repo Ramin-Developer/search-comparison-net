@@ -11,7 +11,12 @@
         FontSize="8" MinWidth="800" MinHeight="600" Width="800" Height="600"
 		WindowStartupLocation="CenterScreen" >
 
-    <Page>
+	<Window.InputBindings>
+		<!-- Enter anywhere in the window runs Simulate Searches (respects CanSimulate). -->
+		<KeyBinding Key="Return" Command="{Binding SimulateCommand}" />
+	</Window.InputBindings>
+
+	<Page>
         <Viewbox>
             <Grid Margin="5">
 
@@ -19,9 +24,9 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
-                    
+
                     <!-- For Data Elements -->
-                    <!-- <RowDefinition Height="Auto" />-->
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -54,6 +59,19 @@
                           BorderBrush="Gray" BorderThickness="0.1" 
                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
                     <userControls:StatusControl Margin="3" />
+                </Border>
+
+                <!-- Data Elements: first, middle, and last values of the generated collection. -->
+                <Border Grid.Row="3" Grid.ColumnSpan="2" Width="Auto" Margin="0 5 0 0"
+                        BorderBrush="Gray" BorderThickness="0.1"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
+                    <StackPanel Orientation="Vertical" Margin="3" HorizontalAlignment="Center">
+                        <Label Style="{StaticResource LabelStyle}" Foreground="Magenta"
+                               HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                               Content="Collection" />
+                        <TextBlock HorizontalAlignment="Center" TextAlignment="Center"
+                                   Text="{Binding DataSample}" />
+                    </StackPanel>
                 </Border>
             </Grid>
         </Viewbox>

@@ -30,9 +30,12 @@ public sealed class FakeSearch : ISearch
 
     public int NoOfEntries { get; set; }
 
+    // Returns the index itself, so dataset-preview tests get distinct, predictable values
+    // (e.g. first=0, middle, last) without needing a real sorted array. The setter is a no-op
+    // required to satisfy the ISearch indexer contract.
     public int this[int index]
     {
-        get => 0;
+        get => index;
         set { }
     }
 

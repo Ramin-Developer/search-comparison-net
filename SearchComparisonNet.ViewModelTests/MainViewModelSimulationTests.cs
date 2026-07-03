@@ -100,4 +100,29 @@ public class MainViewModelSimulationTests
         Assert.False(sut.IsSimulating);
         Assert.Equal(Visibility.Hidden, sut.ProgressBarVisibility);
     }
+
+    [Fact]
+    public void Data_sample_is_empty_before_any_simulation()
+    {
+        var sut = ViewModelFactory.Create();
+
+        Assert.Equal(string.Empty, sut.DataSample);
+    }
+
+    [Fact]
+    public async Task Simulation_publishes_first_middle_and_last_dataset_values()
+    {
+        // The binary fake reports 10 entries and returns its index from the indexer. With three values
+        // per part the preview reads first=0,1,2 ... middle=3,4,5 ((10-3)/2=3) ... last=7,8,9, and a comma
+        // surrounds each separator.
+        var linear = new FakeSearch(noOfIterations: 1);
+        var binary = new FakeSearch(noOfIterations: 1) { NoOfEntries = 10 };
+        var comparison = new FakeSearchComparison(linear, binary);
+        var sut = ViewModelFactory.Create(out _, comparison);
+        sut.NoOfSearchesText = 1_000.ToString();
+
+        await sut.SimulateCommand.ExecuteAsync(null);
+
+        Assert.Equal("0, 1, 2, ..., 3, 4, 5, ..., 7, 8, 9", sut.DataSample);
+    }
 }

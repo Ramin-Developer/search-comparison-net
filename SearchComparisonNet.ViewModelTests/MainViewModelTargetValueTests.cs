@@ -1,7 +1,7 @@
 namespace SearchComparisonNet.ViewModelTests;
 
-// These tests pin down the TargetValue -> TargetIndex behavior, including the case where the
-// refactor dropped a redundant int->string->int round-trip parse from the original setter.
+// These tests pin down the TargetValue -> TargetIndex behavior. The lookup is explicit: it runs
+// via SearchCommand (the Search button / Enter key), not implicitly when TargetValue changes.
 // The binary search used for the lookup is only assigned while a simulation runs, so tests
 // that need a non-null lookup first execute SimulateCommand against a configured fake.
 public class MainViewModelTargetValueTests
@@ -19,24 +19,28 @@ public class MainViewModelTargetValueTests
         var sut = ViewModelFactory.Create();
 
         sut.TargetValue = 123;
+        sut.SearchCommand.Execute(null);
 
-        // No simulation has run, so BinarySearch is null and the lookup is skipped.
+        // No simulation has run, so BinarySearch is null and the search is a no-op.
         Assert.Null(sut.TargetIndex);
+        Assert.False(sut.TargetIndexNotFound);
     }
 
     [Fact]
-    public async Task Setting_target_value_after_simulation_resolves_target_index()
+    public async Task Searching_after_simulation_resolves_target_index()
     {
         var sut = CreateWithBinaryTargetIndex(targetIndex: 7);
         await sut.SimulateCommand.ExecuteAsync(null);
 
         sut.TargetValue = 42;
+        sut.SearchCommand.Execute(null);
 
         Assert.Equal(7, sut.TargetIndex);
+        Assert.False(sut.TargetIndexNotFound);
     }
 
     [Fact]
-    public async Task Setting_target_value_forwards_value_to_binary_search()
+    public async Task Searching_forwards_value_to_binary_search()
     {
         var binary = new FakeSearch(targetIndex: 3);
         var comparison = new FakeSearchComparison(new FakeSearch(), binary);
@@ -44,6 +48,7 @@ public class MainViewModelTargetValueTests
         await sut.SimulateCommand.ExecuteAsync(null);
 
         sut.TargetValue = 99;
+        sut.SearchCommand.Execute(null);
 
         // The exact value set on TargetValue must reach FindItem unchanged (no lossy parse).
         Assert.Equal(99, binary.LastSearchedValue);
@@ -52,28 +57,58 @@ public class MainViewModelTargetValueTests
     [Fact]
     public async Task Negative_target_value_is_forwarded_unchanged()
     {
-        var binary = new FakeSearch(targetIndex: null);
+        var binary = new FakeSearch(targetIndex: 3);
         var comparison = new FakeSearchComparison(new FakeSearch(), binary);
         var sut = ViewModelFactory.Create(out _, comparison);
         await sut.SimulateCommand.ExecuteAsync(null);
 
         sut.TargetValue = -250;
+        sut.SearchCommand.Execute(null);
 
         Assert.Equal(-250, binary.LastSearchedValue);
     }
 
     [Fact]
-    public async Task Setting_target_value_to_null_does_not_perform_lookup()
+    public async Task Not_found_value_reports_minus_one_and_not_found_flag()
     {
-        var sut = CreateWithBinaryTargetIndex(targetIndex: 5);
+        // The fake resolves every lookup to TargetIndex = null, i.e. "value absent from the dataset".
+        var sut = CreateWithBinaryTargetIndex(targetIndex: null);
         await sut.SimulateCommand.ExecuteAsync(null);
-        sut.TargetValue = 10;
-        Assert.Equal(5, sut.TargetIndex);
 
+        sut.TargetValue = 12345;
+        sut.SearchCommand.Execute(null);
+
+        Assert.Equal(-1, sut.TargetIndex);
+        Assert.True(sut.TargetIndexNotFound);
+        Assert.Equal("Not Found", sut.TargetIndexTooltip);
+    }
+
+    [Fact]
+    public async Task Changing_target_value_clears_previous_not_found_state()
+    {
+        var sut = CreateWithBinaryTargetIndex(targetIndex: null);
+        await sut.SimulateCommand.ExecuteAsync(null);
+        sut.TargetValue = 12345;
+        sut.SearchCommand.Execute(null);
+        Assert.True(sut.TargetIndexNotFound);
+
+        // Editing the value must clear the stale "Not found" feedback before the next search.
+        sut.TargetValue = 999;
+
+        Assert.False(sut.TargetIndexNotFound);
+        Assert.Null(sut.TargetIndexTooltip);
+    }
+
+    [Fact]
+    public void Search_command_is_disabled_when_target_value_is_not_a_valid_integer()
+    {
+        var sut = ViewModelFactory.Create();
+
+        // WPF sets the bound int? to null when the entered text is not a valid integer.
         sut.TargetValue = null;
+        Assert.False(sut.SearchCommand.CanExecute(null));
 
-        // Clearing the value leaves the previously resolved index untouched (setter returns early).
-        Assert.Equal(5, sut.TargetIndex);
-        Assert.Null(sut.TargetValue);
+        sut.TargetValue = 5;
+        Assert.True(sut.SearchCommand.CanExecute(null));
     }
 }

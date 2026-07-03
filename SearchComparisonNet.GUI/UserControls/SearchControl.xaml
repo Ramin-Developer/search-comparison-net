@@ -15,9 +15,10 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Label Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource LabelStyle}" Width ="95" Foreground="Magenta"
+        <Label Grid.Row="0" Grid.ColumnSpan="3" Style="{StaticResource LabelStyle}" Width ="95" Foreground="Magenta"
                HorizontalAlignment="Center" HorizontalContentAlignment="Center"
                Content="Single Value Search" />
 
@@ -26,16 +27,25 @@
                Content="Target Value" />
 
         <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource TextErrorStyle}" Width ="55"
-                 Text="{Binding TargetValue, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True}"
+                 Text="{Binding TargetValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
                  IsEnabled="{Binding IsSearchEnabled, Mode=TwoWay, UpdateSourceTrigger=LostFocus,
-                 ValidatesOnNotifyDataErrors=True}" />
+                 ValidatesOnNotifyDataErrors=True}">
+            <TextBox.InputBindings>
+                <KeyBinding Key="Return" Command="{Binding SearchCommand}" />
+            </TextBox.InputBindings>
+        </TextBox>
+
+        <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource ButtonStyle}" Width="55" Margin="2, 0"
+                Command="{Binding SearchCommand}" Content="Search" />
 
         <Label Grid.Row="2" Grid.Column="0" Style="{StaticResource LabelStyle}" Width ="93"
                HorizontalAlignment="Left" HorizontalContentAlignment="Left"
                Content="Target Index" />
-        
+
         <TextBox Grid.Row="2" Grid.Column="1" Style="{StaticResource TextErrorStyle}" Width ="55"
                  Text="{Binding TargetIndex, Mode=TwoWay, UpdateSourceTrigger=LostFocus, ValidatesOnNotifyDataErrors=True}"
+                 ToolTip="{Binding TargetIndexTooltip}"
+                 ToolTipService.ShowOnDisabled="True"
                  IsEnabled="False" />
     </Grid>
 
