@@ -68,6 +68,22 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private int? _targetValue;
 
+    // True when the most recent search resolved but the value was absent from the dataset.
+    // Drives the "-1" convention and the "Not Found" tooltip on the Target Index box.
+    [ObservableProperty]
+    private bool _targetIndexNotFound;
+
+    // Tooltip for the Target Index box: explains the "-1" shown for a not-found value. Returns null
+    // when there is nothing to show so WPF suppresses the tooltip popup entirely.
+    public string? TargetIndexTooltip => TargetIndexNotFound ? "Not Found" : null;
+
+    partial void OnTargetIndexNotFoundChanged(bool value) => OnPropertyChanged(nameof(TargetIndexTooltip));
+
+    // A compact preview of the generated (sorted) dataset: first, middle, and last values,
+    // separated by dots. Populated once a simulation has produced the data.
+    [ObservableProperty]
+    private string _dataSample = string.Empty;
+
     partial void OnIsSimulatingChanged(bool value) => UpdateButtonFunctionality();
 
     partial void OnProgressBarValueChanged(double value)
@@ -101,13 +117,13 @@ public partial class MainViewModel : ViewModelBase
         return true;
     }
 
+    // The lookup is no longer implicit: it runs on demand via SearchCommand (button or Enter).
+    // Changing the value only refreshes the command's enabled state and clears any stale
+    // "not found" feedback from a previous search.
     partial void OnTargetValueChanged(int? value)
     {
-        if (value == null)
-        { return; }
-
-        var searchItem = BinarySearch?.FindItem(value.Value);
-        TargetIndex = searchItem?.TargetIndex;
+        TargetIndexNotFound = false;
+        SearchCommand.NotifyCanExecuteChanged();
     }
 
     private void UpdateButtonFunctionality()
@@ -126,16 +142,77 @@ public partial class MainViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanCancel))]
     private void Cancel() => SimulateCommand.Cancel();
 
+    // Enabled whenever the Target Value is a valid integer. WPF sets the bound int? to null when
+    // the entered text is not a valid integer, so a non-null value implies valid input.
+    private bool CanSearch() => TargetValue is not null;
+
+    // Runs a single binary-search lookup for the current Target Value. BinarySearch is only
+    // assigned once a simulation has run, so before then this is a safe no-op. A value that is
+    // absent from the dataset yields TargetIndex = -1 and a "Not found" tooltip.
+    [RelayCommand(CanExecute = nameof(CanSearch))]
+    private void Search()
+    {
+        if (BinarySearch is null || TargetValue is null)
+        { return; }
+
+        var searchItem = BinarySearch.FindItem(TargetValue.Value);
+        if (searchItem.TargetIndex is null)
+        {
+            TargetIndexNotFound = true;
+            TargetIndex = -1;
+        }
+        else
+        {
+            TargetIndexNotFound = false;
+            TargetIndex = searchItem.TargetIndex;
+        }
+    }
+
+    // Formats a preview of the sorted dataset as three groups joined by ", ..., ": the first N values,
+    // N values around the middle, and the last N values, where N is SimulationConstants.DataSampleValueCount
+    // (default 3). Values within each group are comma-separated, and a comma surrounds each " ... "
+    // separator. Uses the ISearch indexer, so it reads the shared data without exposing the underlying array.
+    private static string BuildDataSample(ISearch search)
+    {
+        var count = search.NoOfEntries;
+        var perGroup = SimulationConstants.DataSampleValueCount;
+        if (count == 0 || perGroup <= 0)
+        { return string.Empty; }
+
+        // When the collection is too small to show three distinct groups, just list every value.
+        if (count <= perGroup * 3)
+        { return FormatRange(search, 0, count); }
+
+        var firstGroup = FormatRange(search, 0, perGroup);
+        var middleGroup = FormatRange(search, (count - perGroup) / 2, perGroup);
+        var lastGroup = FormatRange(search, count - perGroup, perGroup);
+
+        return string.Join(", ..., ", firstGroup, middleGroup, lastGroup);
+    }
+
+    // Joins `length` values starting at `start` as comma-separated numbers using the ISearch indexer.
+    private static string FormatRange(ISearch search, int start, int length)
+    {
+        var values = new string[length];
+        for (var i = 0; i < length; i++)
+        { values[i] = search[start + i].ToString(CultureInfo.InvariantCulture); }
+
+        return string.Join(", ", values);
+    }
+
     [RelayCommand(CanExecute = nameof(CanSimulate))]
     private async Task SimulateAsync(CancellationToken token)
     {
         IsSearchEnabled = false;
         TargetValue = null;
         TargetIndex = null;
+        TargetIndexNotFound = false;
+        DataSample = string.Empty;
 
         var searchComparison = _searchComparisonFactory.Create(NoOfEntries);
         LinearSearch = searchComparison.LinearSearch;
         BinarySearch = searchComparison.BinarySearch;
+        DataSample = BuildDataSample(BinarySearch);
         var nextRandomNo = searchComparison.NextRandomNo;
 
         IsSimulating = true;

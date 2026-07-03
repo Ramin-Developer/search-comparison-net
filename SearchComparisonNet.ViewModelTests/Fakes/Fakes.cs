@@ -30,7 +30,14 @@ public sealed class FakeSearch : ISearch
 
     public int NoOfEntries { get; set; }
 
-    public int this[int index] => 0;
+    // Returns the index itself, so dataset-preview tests get distinct, predictable values
+    // (e.g. first=0, middle, last) without needing a real sorted array. The setter is a no-op
+    // required to satisfy the ISearch indexer contract.
+    public int this[int index]
+    {
+        get => index;
+        set { }
+    }
 
     // Record the last value searched so target-lookup tests can assert what the view model passed in.
     public int? LastSearchedValue { get; private set; }
