@@ -1,6 +1,10 @@
 # SearchComparisonNet
 
-A small .NET 10 application that compares the efficiency of **linear search** and **binary search**
+[![CI](https://github.com/Ramin-Developer/SearchComparisonNet/actions/workflows/ci.yml/badge.svg)](https://github.com/Ramin-Developer/SearchComparisonNet/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.txt)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
+
+A .NET 10 WPF application that compares the efficiency of **linear search** and **binary search**
 over a generated, sorted integer dataset. It runs many randomized lookups with each strategy and
 reports the average number of iterations and elapsed time side by side, with a WPF UI for driving
 simulations and inspecting results.
@@ -15,6 +19,12 @@ simulations and inspecting results.
 - Supports a single on-demand lookup for a specific target value, showing its index (or `-1` with a
   "Not Found" hint when the value is absent).
 - Shows a compact preview of the generated collection (first, middle, and last values).
+
+## Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- Windows (the GUI targets `net10.0-windows`)
+- Visual Studio 2026 **or** any editor with C# support
 
 ## Solution layout
 
@@ -49,8 +59,7 @@ dotnet test SearchComparisonNet.slnx
 dotnet run --project SearchComparisonNet.GUI
 ```
 
-> The GUI targets `net10.0-windows` and requires Windows to run. The solution can also be opened
-> directly in Visual Studio 2026 via `SearchComparisonNet.slnx`.
+> The solution can also be opened directly in Visual Studio 2026 via `SearchComparisonNet.slnx`.
 
 ## Contributing
 
@@ -58,3 +67,7 @@ All changes—including documentation-only changes—go through pull requests in
 being pushed directly. Each change ships on its own focused branch. See
 [`TODO.md`](TODO.md) for the current backlog and
 [`docs/review/solution-review.md`](docs/review/solution-review.md) for the standing code review.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.txt).
