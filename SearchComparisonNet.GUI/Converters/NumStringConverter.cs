@@ -11,14 +11,14 @@ public class NumStringConverter : IValueConverter
         var isAbsLogSmall = value is double db && Math.Abs(Math.Log10(db)) < limitAbsLog;
         var text = value.ToString();
 
-        if (long.TryParse(text, out var intValue))
+        if (long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue))
         {
             return isAbsLogSmall
                 ? intValue.ToString("D3", CultureInfo.InvariantCulture)
                 : intValue.ToString("G3", CultureInfo.InvariantCulture);
         }
 
-        if (double.TryParse(text, out var dbValue))
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var dbValue))
         {
             return isAbsLogSmall
                 ? dbValue.ToString("G3", CultureInfo.InvariantCulture)

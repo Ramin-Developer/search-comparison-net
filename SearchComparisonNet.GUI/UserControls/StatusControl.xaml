@@ -10,13 +10,13 @@
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <ProgressBar Grid.Row="0" Width="Auto" Height="20"
+        <ProgressBar Grid.Row="0" Width="Auto" Height="{StaticResource ControlHeight}"
                      Visibility="{Binding ProgressBarVisibility}"
                      Value="{Binding ProgressBarValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                      HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                      HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
 
-        <TextBlock Grid.Row="0" Width="45" Height="10"
+        <TextBlock Grid.Row="0"
                Visibility="{Binding ProgressBarVisibility}" Text="{Binding ProgressBarLabel}"
                HorizontalAlignment="Stretch" VerticalAlignment="Center" TextAlignment="Center"/>
     </Grid>
