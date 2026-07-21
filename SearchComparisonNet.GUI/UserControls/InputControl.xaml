@@ -19,19 +19,21 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
 
-        <Label Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource LabelStyle}" Foreground="Magenta" Width="95"
-               HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Center" Content="Input Panel" />
+        <Label Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource LabelStyle}" Foreground="Magenta"
+               Width="{StaticResource LabelHeaderWidth}"
+               HorizontalAlignment="Center" HorizontalContentAlignment="Center" VerticalAlignment="Center"
+               Content="Input Panel" />
 
-        <Label Grid.Row ="1" Grid.Column="0" Style="{StaticResource LabelStyle}" Width="93"
-               HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="No. of Entries" />
+        <Label Grid.Row ="1" Grid.Column="0" Style="{StaticResource LabelStyle}"
+               Width="{StaticResource LabelWidth}" Content="No. of Entries" />
 
         <TextBox Grid.Row ="1" Grid.Column="1" Style="{StaticResource TextErrorStyle}" Width="55" HorizontalAlignment="Right" 
                  Text="{Binding NoOfEntriesText, Mode=TwoWay, UpdateSourceTrigger=LostFocus,
                  ValidatesOnNotifyDataErrors=True, Converter={StaticResource NumStringConverter}}"
                  IsEnabled="{Binding IsSimulating, Converter={StaticResource NegativeConverter}}"/>
 
-        <Label Grid.Row ="2" Grid.Column="0" Style="{StaticResource LabelStyle}" Width="93"
-               HorizontalAlignment="Left" HorizontalContentAlignment="Left" Content="No. of Searches" />
+        <Label Grid.Row ="2" Grid.Column="0" Style="{StaticResource LabelStyle}"
+               Width="{StaticResource LabelWidth}" Content="No. of Searches" />
 
         <TextBox Grid.Row ="2" Grid.Column="1" Style="{StaticResource TextErrorStyle}" Width="55" HorizontalAlignment="Right" 
                  Text="{Binding NoOfSearchesText, Mode=TwoWay, UpdateSourceTrigger=LostFocus,

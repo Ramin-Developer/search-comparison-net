@@ -11,6 +11,11 @@
          Set to the textbox's natural content height; tune here in one place if needed. -->
     <system:Double x:Key="ControlHeight">16</system:Double>
 
+    <!-- Label widths: tune in one place for all controls. -->
+    <system:Double x:Key="LabelHeaderWidth">95</system:Double>
+    <system:Double x:Key="LabelWidth">93</system:Double>
+    <system:Double x:Key="LabelValueWidth">50</system:Double>
+
     <Style x:Key="ButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="#95E3E2" />
         <Setter Property="FontSize" Value="8" />
@@ -26,9 +31,9 @@
     <Style x:Key="LabelStyle" TargetType="Label">
         <Setter Property="Width" Value="Auto" />
         <Setter Property="Height" Value="Auto" />
-        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 

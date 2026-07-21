@@ -5,4 +5,5 @@ global using SearchComparisonNet.Kernel.Models;
 global using SearchComparisonNet.ViewModelTests.Fakes;
 global using System.Globalization;
 global using System.Windows;
+global using System.Windows.Threading;
 global using Xunit;
