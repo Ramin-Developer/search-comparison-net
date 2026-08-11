@@ -49,8 +49,10 @@ MigrationBackup/
 *.svclog
 *.tmp
 *.tmp_proj
+*.temp
 *.vsp
 *.vspx
+[Bb]uild[Ll]og.*
 
 # -------------------------
 # .NET / Visual Studio / F#
@@ -83,6 +85,8 @@ project.fragment.lock.json
 *.fsproj.user
 *.fsx.locked
 *.fsharplint
+*_wpftmp.csproj
+*.VisualState.xml
 
 # -------------------------
 # Tests, coverage, benchmarks
@@ -169,11 +173,14 @@ healthchecksdb
 *.bcf
 *.bcf-SAVE-ERROR
 *.blg
+*-blx.aux
+*-blx.bib
 *.brf
 *.cb
 *.cb2
 *.cut
 *.dpth
+*.dvi
 *.ent
 *.fdb_latexmk
 *.fls
@@ -181,9 +188,14 @@ healthchecksdb
 *.fot
 *.gaux
 *.glg
+*.glg-abr
 *.glo
+*.glo-abr
 *.gls
+*.gls-abr
 *.glsdefs
+*.glog
+*.gtex
 *.gnuplot
 *.hd
 *.hst
@@ -192,7 +204,10 @@ healthchecksdb
 *.ilg
 *.ind
 *.listing
+*.lg
 *.loa
+*.loc
+*.lod
 *.lof
 *.loe
 *.lol
@@ -201,6 +216,8 @@ healthchecksdb
 *.ltjruby
 *.maf
 *.md5
+*.mlf
+*.mlt
 *.mtc[0-9]*
 *.mw
 *.nav
@@ -210,17 +227,24 @@ healthchecksdb
 *.nls
 *.out
 *.pax
+.pdf
 *.pdf
+!**/figures/*.pdf
 *.pdfpc
 *.pdfsync
 *.pre
 *.ptc
 *.pyg
+*.pytxcode
 *.run.xml
 *.sagetex.py
 *.sagetex.sage
 *.sagetex.scmd
+*.sbl
+*.slg
 *.slf[0-9]*
+*.slo
+*.sls
 *.slt[0-9]*
 *.snm
 *.soc
@@ -233,13 +257,23 @@ healthchecksdb
 *.synctex(busy)
 *.synctex.gz
 *.synctex.gz(busy)
+*.sym
+*.sout
+*.sympy
 *.table
+*.t[1-9]
+*.t[1-9][0-9]
 *.tdo
 *.thm
+*.tfm
+*.tin
 *.toc
 *.trc
+*.tps
+*.ttt
 *.tuc
 *.tui
+*.tut
 *.tuo
 *.upa
 *.upb
@@ -256,10 +290,50 @@ healthchecksdb
 *.xref
 latex.out/
 _minted*/
+_minted*
 pythontex-files-*/
 rubber.cache
 svg-inkscape/
 sympy-plots-for-*.tex/
+.*.lb
+.*.swp
+./auto/*
+.texpadtmp
+*-concordance.tex
+*-converted-to.*
+*-gnuplottex-*
+*-tags.tex
+*-tikzDictionary
+*.4ct
+*.4tc
+*.?end
+*.[1-9]
+*.[1-9][0-9]
+*.[1-9][0-9][0-9]
+*.[1-9]R
+*.[1-9][0-9]R
+*.[1-9][0-9][0-9]R
+*.backup
+*.bak[0-9]*
+*.cpt
+*.data.minted
+*.eledsec[1-9]
+*.eledsec[1-9]R
+*.eledsec[1-9][0-9]
+*.eledsec[1-9][0-9]R
+*.eledsec[1-9][0-9][0-9]
+*.eledsec[1-9][0-9][0-9]R
+*.end
+*.fff
+*.lpz
+*.lyx~
+*.lzo
+*.lzs
+*.rubbercache
+*.sav
+*~[0-9]*
+acs-*.bib
+TSWLatexianTemp*
 
 # -------------------------
 # MATLAB / Octave / Simulink
@@ -269,6 +343,8 @@ sympy-plots-for-*.tex/
 *.fig
 *.m~
 *.mat
+*.mex*
+*.pcode
 *.slx.autosave
 *.slxc
 
