@@ -63,6 +63,11 @@ dotnet run --project SearchComparisonNet.GUI
 
 ## Contributing
 
+This repository follows the shared tooling and editor baseline from
+https://github.com/Ramin-Developer/developer-workflow. Those workflow-alignment changes are
+implemented in the repo-level `.editorconfig`, `.gitignore`, and `.vscode/settings.json` files,
+while the project-specific .NET solution and application code remain intact.
+
 All changes—including documentation-only changes—go through pull requests into `main` rather than
 being pushed directly. Each change ships on its own focused branch. See
 [`TODO.md`](TODO.md) for the current backlog and
