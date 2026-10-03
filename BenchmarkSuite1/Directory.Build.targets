@@ -1,0 +1,6 @@
+<Project>
+  <!-- DiagnosticsHub diagnosers package injects a netstandard2.0 System.Collections.Immutable reference that conflicts with the shared framework copy. -->
+  <ItemGroup>
+    <Reference Remove="System.Collections.Immutable" />
+  </ItemGroup>
+</Project>
